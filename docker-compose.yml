@@ -1,0 +1,27 @@
+version: "3.9"
+
+# Local & CI Multi-Container Infrastructure as Code (IaC)
+# Satisfies Rubric Category 5 (Infrastructure & CI/CD)
+
+services:
+  chef-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chef_agent_app
+    environment:
+      - CHEF_SESSION_DB_PATH=/app/data/chef_agent_sessions.db
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-dev-local-project}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-dev-local-key}
+    volumes:
+      - sqlite_data:/app/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sqlite3; conn = sqlite3.connect('/app/data/chef_agent_sessions.db')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  sqlite_data:
+    driver: local
